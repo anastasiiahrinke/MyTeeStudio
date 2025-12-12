@@ -1,6 +1,7 @@
-import { Canvas } from "@react-three/fiber";
-import { Environment, Center, OrbitControls, useGLTF, AccumulativeShadows, RandomizedLight } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, Center, useGLTF, AccumulativeShadows, RandomizedLight } from "@react-three/drei";
 import { useRef } from 'react'
+import {easing} from 'maath'
 
 export const App = ({ position = [-1, 0, 2.5], fov = 25 }) => {
   return (
@@ -9,16 +10,17 @@ export const App = ({ position = [-1, 0, 2.5], fov = 25 }) => {
       camera={{ position, fov }}
       eventSource={document.getElementById("root")}
       eventPrefix="client"
+      style={{ paddingTop: '4rem' }}
     >
       <ambientLight intensity={0.5} />
       <Environment preset="city" />
 
+    <CameraRig>
       <Center>
         <Shirt />
         <Backdrop />
       </Center>
-
-      <OrbitControls />
+    </CameraRig>
     </Canvas>
   );
 };
@@ -26,14 +28,15 @@ export const App = ({ position = [-1, 0, 2.5], fov = 25 }) => {
 function Shirt(props) {
 const { nodes, materials } = useGLTF('/shirt_starter_test.glb')
   return (
-    <group {...props} dispose={null}>
+    <group {...props} dispose={null} >
       <mesh
         castShadow
         receiveShadow
         geometry={nodes.T_Shirt_male.geometry}
         material={materials.lambert1}
-        position={[0, 0.265, -0.008]}
+        position={[0.50, 0.05, -0.008]}
         rotation={[Math.PI / 2, 0, 0]}
+        scale={1.5}
       />
     </group>
   )
@@ -66,6 +69,29 @@ function Backdrop() {
   )
 }
 
+// x
+// : 
+// -0.9999999999999997
+// y
+// : 
+// 1.6487312109845608e-16
+// z
+// : 
+// 2.5
 
+function CameraRig({ children }){
+  const group = useRef()
+
+  useFrame((state, delta) => {
+    easing.dampE(
+      group.current.rotation,
+      [state.pointer.y/5, -state.pointer.x/10, 0],
+      0.60,
+      delta
+    )
+  })
+
+  return <group ref={group}>{children}</group>
+}
 
 useGLTF.preload('/shirt_starter_test.glb')
